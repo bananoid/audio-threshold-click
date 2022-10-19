@@ -36,3 +36,12 @@ npm run build
 You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+
+## Run script in browser dev console
+
+```javascript
+var script = document.createElement('script');
+script.type = 'text/javascript';
+script.src = 'http://127.0.0.1:5173/test.js';
+document.head.appendChild(script);
+```

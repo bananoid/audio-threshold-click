@@ -12,12 +12,12 @@
 
 const volumeEl = document.createElement('div');
 volumeEl.style.position = 'absolute';
-volumeEl.style.height = '2px';
+volumeEl.style.height = '100px';
 volumeEl.style.width = '100vw';
 volumeEl.style.zIndex = '100000';
 volumeEl.style.top = '0';
 volumeEl.style.left = '0';
-volumeEl.style.backgroundColor = '#ff0000';
+volumeEl.style.backgroundColor = 'rgba(255,0,0,0.9)';
 
 document.body.appendChild(volumeEl);
 window.volumeEl = volumeEl;
@@ -26,12 +26,13 @@ let bodyEl = document.querySelector('body');
 console.log('bodyEl', bodyEl);
 
 let targetSelector =
+	localStorage.getItem('targetSelector') ||
 	'body > div > div.flex.grow.flex-col > div.justify-center.items-center.grow.flex.p-4 > button';
 let targetEl;
 
 function getTargetSelector() {
 	targetSelector = prompt(`Please write button target selector:`, targetSelector);
-
+	localStorage.setItem('targetSelector', targetSelector);
 	targetEl = document.querySelector(targetSelector);
 
 	console.log('targetEl', targetEl);
@@ -89,13 +90,13 @@ async function getMedia() {
 		maxVolume = Math.max(maxVolume, volume);
 
 		if (!inRange && maxVolume >= volumeMaxTheshold) {
-			console.log('inRange onn');
+			console.log('>> in');
 			inRange = true;
 			targetEl.click();
 		}
 
 		if (inRange && maxVolume <= volumeMinTheshold) {
-			console.log('inRange off');
+			console.log('<< out');
 			inRange = false;
 			targetEl.click();
 		}
