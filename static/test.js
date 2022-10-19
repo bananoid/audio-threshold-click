@@ -3,13 +3,6 @@
 // script.src = 'http://127.0.0.1:5173/test.js';
 // document.head.appendChild(script);
 
-// function importURL(src) {
-// 	var script = document.createElement('script');
-// 	script.type = 'text/javascript';
-// 	script.src = src;
-// 	document.head.appendChild(script);
-// }
-
 const volumeEl = document.createElement('div');
 volumeEl.style.position = 'absolute';
 volumeEl.style.height = '100px';
@@ -34,12 +27,20 @@ let onTargetSelector =
 	'body > div > div.flex.grow.flex-col > div.justify-center.items-center.grow.flex.p-4 > button';
 let onTargetEl;
 
+let offTargetSelector = localStorage.getItem('offTargetSelector') || onTargetSelector;
+let offTargetEl;
+
 function getTargetSelector() {
-	onTargetSelector = prompt(`Please write button target selector:`, onTargetSelector);
+	onTargetSelector = prompt(`Please write on button target selector:`, onTargetSelector);
 	localStorage.setItem('onTargetSelector', onTargetSelector);
 	onTargetEl = document.querySelector(onTargetSelector);
 
+	offTargetSelector = prompt(`Please write off button target selector:`, offTargetSelector);
+	localStorage.setItem('offTargetSelector', offTargetSelector);
+	offTargetEl = document.querySelector(offTargetSelector);
+
 	console.log('onTargetEl', onTargetEl);
+	console.log('offTargetEl', offTargetEl);
 }
 
 getTargetSelector();
@@ -99,7 +100,7 @@ async function getMedia() {
 		clearTimeout(activeTimeoutId);
 		activeTimeoutId = activeTimeoutId = setTimeout(() => {
 			isActive = false;
-			onTargetEl.click();
+			offTargetEl.click();
 		}, silenceTimeoutMS);
 	}
 
