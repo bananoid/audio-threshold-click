@@ -17,25 +17,29 @@ volumeEl.style.width = '100vw';
 volumeEl.style.zIndex = '100000';
 volumeEl.style.top = '0';
 volumeEl.style.left = '0';
-volumeEl.style.backgroundColor = 'rgba(255,0,0,0.9)';
+volumeEl.style.backgroundColor = 'rgba(255,0,0,0.7)';
+
+const maxVolEl = volumeEl.cloneNode();
+maxVolEl.style.backgroundColor = 'rgba(255,100,0,0.3)';
 
 document.body.appendChild(volumeEl);
+document.body.appendChild(maxVolEl);
 window.volumeEl = volumeEl;
 
 let bodyEl = document.querySelector('body');
 console.log('bodyEl', bodyEl);
 
-let targetSelector =
-	localStorage.getItem('targetSelector') ||
+let onTargetSelector =
+	localStorage.getItem('onTargetSelector') ||
 	'body > div > div.flex.grow.flex-col > div.justify-center.items-center.grow.flex.p-4 > button';
-let targetEl;
+let onTargetEl;
 
 function getTargetSelector() {
-	targetSelector = prompt(`Please write button target selector:`, targetSelector);
-	localStorage.setItem('targetSelector', targetSelector);
-	targetEl = document.querySelector(targetSelector);
+	onTargetSelector = prompt(`Please write button target selector:`, onTargetSelector);
+	localStorage.setItem('onTargetSelector', onTargetSelector);
+	onTargetEl = document.querySelector(onTargetSelector);
 
-	console.log('targetEl', targetEl);
+	console.log('onTargetEl', onTargetEl);
 }
 
 getTargetSelector();
@@ -43,8 +47,10 @@ getTargetSelector();
 let maxVolume = 0;
 let maxVolumeDecay = 0.01;
 let volumeMaxTheshold = 0.1;
-let volumeMinTheshold = 0.02;
-let inRange = false;
+let silenceTimeoutMS = 1000;
+let isActive;
+
+let smoothVolume = 0;
 
 async function getMedia() {
 	let stream = null;
@@ -75,34 +81,46 @@ async function getMedia() {
 	const audioContext = new AudioContext();
 	const mediaStreamAudioSourceNode = audioContext.createMediaStreamSource(stream);
 	const analyserNode = audioContext.createAnalyser();
-	// analyserNode.fftSize = 8;
+	analyserNode.fftSize = 32;
 	mediaStreamAudioSourceNode.connect(analyserNode);
 
 	const pcmData = new Float32Array(analyserNode.fftSize);
+
+	console.log('analyserNode.fftSize', analyserNode.fftSize);
+
+	let activeTimeoutId;
+
+	function setActive() {
+		if (!isActive) {
+			isActive = true;
+			onTargetEl.click();
+		}
+
+		clearTimeout(activeTimeoutId);
+		activeTimeoutId = activeTimeoutId = setTimeout(() => {
+			isActive = false;
+			onTargetEl.click();
+		}, silenceTimeoutMS);
+	}
+
 	const onFrame = () => {
 		analyserNode.getFloatTimeDomainData(pcmData);
-		let sumSquares = 0.0;
+		let volume = 0.0;
 		for (const amplitude of pcmData) {
-			sumSquares += amplitude * amplitude;
+			volume += amplitude * amplitude * 10;
 		}
-		let volume = Math.sqrt(sumSquares / pcmData.length);
+		volume = Math.sqrt(volume / pcmData.length);
 
 		maxVolume = Math.max(maxVolume, volume);
+		smoothVolume += (volume - smoothVolume) * 0.1;
 
-		if (!inRange && maxVolume >= volumeMaxTheshold) {
-			console.log('>> in');
-			inRange = true;
-			targetEl.click();
-		}
-
-		if (inRange && maxVolume <= volumeMinTheshold) {
-			console.log('<< out');
-			inRange = false;
-			targetEl.click();
+		if (volume >= volumeMaxTheshold) {
+			// console.log('>> in');
+			setActive();
 		}
 
 		volumeEl.style.width = `${volume * 100}vw`;
-		// console.log(maxVolume);
+		maxVolEl.style.width = `${maxVolume * 100}vw`;
 
 		maxVolume = Math.max(maxVolume - maxVolumeDecay, 0);
 		window.requestAnimationFrame(onFrame);
